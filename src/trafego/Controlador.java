@@ -17,15 +17,18 @@ import javax.swing.Timer;
  *
  * @author UCS
  */
-public class Controlador extends JPanel implements ActionListener {
+public class Controlador extends JPanel {
 
-    private Timer timer;
+    private Timer timerMoverCarro;
+    private Timer timerCriarCarro;
     private ArrayList<Rua> ruas;
     private final int widthRua = 200;
     private final int heightRua = 150;
     private final int widthCarro = 50;
     private final int heightCarro = 20;
     private final int velocidadeCarro = 10;
+    private final int tempoMinimo = 1500;
+    private final int tempoMaximo = 5000;
 
     public Controlador(Trafego t)
     {
@@ -35,8 +38,8 @@ public class Controlador extends JPanel implements ActionListener {
     private void initControlador(Trafego t)
     {
        setFocusable(true);
-       timer = new Timer(400, this);
-       timer.start();
+       timerMoverCarro = new Timer(400, new ActionMoverCarro());
+       timerCriarCarro = new Timer(1, new ActionCriarCarro());
        
        Rua r1 = new Rua(0, widthRua, "H");
        Rua r2 = new Rua(widthRua, 0, "V");
@@ -54,10 +57,14 @@ public class Controlador extends JPanel implements ActionListener {
     public void iniciar()
     {
         // random
-        ruas.get(0).addCarro(new Carro());
-        ruas.get(1).addCarro(new Carro());
+        //ruas.get(0).addCarro(new Carro());
+        //ruas.get(1).addCarro(new Carro());
         
-        timer.start();
+        timerCriarCarro.start();
+        timerMoverCarro.start();
+        
+     
+        
     }
     
     @Override
@@ -113,56 +120,103 @@ public class Controlador extends JPanel implements ActionListener {
         }
     }
     
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        moverCarros();
-        repaint();
+    public class ActionCriarCarro implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            ((Timer) e.getSource()).stop();
+        
+            int nrorua = (int) (Math.random() * 5);//5 nro de ruas
+            if (nrorua == 3) {//3 rua central
+                nrorua++;
+            }
+            
+            Carro c = new Carro();
+            
+            int proxNroRua = (int) (Math.random() * 5);
+            while (proxNroRua == nrorua || proxNroRua == 3) {
+                proxNroRua++;
+                if (proxNroRua > 4) {
+                    proxNroRua = 0;
+                }
+            }
+            
+            c.setProxRua(proxNroRua);
+            
+            ruas.get(nrorua).addCarro(c);
+
+            int delay = (int) (tempoMinimo + Math.random() * tempoMaximo);
+            ((Timer) e.getSource()).setInitialDelay(delay);
+
+            ((Timer) e.getSource()).start();
+        }
+        
     }
     
-    public void moverCarros()
-    {
-        for(Rua r : ruas)
+    public class ActionMoverCarro implements ActionListener { 
+        private Object SwingUtils;
+       
+        @Override
+        public void actionPerformed(ActionEvent e)
         {
-            for(Carro c : r.getCarros())
+            ((Timer) e.getSource()).stop();
+            moverCarros();
+            repaint();
+            ((Timer) e.getSource()).start();
+        }
+
+        public void moverCarros()
+        {
+            int indexRua = 0;
+            for(Rua r : ruas)
             {
-                if(null != r.getTipo()) 
-                switch (r.getTipo()) 
+                for(Carro c : r.getCarros())
                 {
-                    case "H":
-                        if ((c.getX() + widthCarro) != (widthRua + r.getX()))
-                        {
-                            c.setX(c.getX() + velocidadeCarro);
-                        }
-                        else // vira pra direita
-                        {
-                            r.removeCarro();
-                            ruas.get(3).addCarro(c);
-                        }
-                        break;
-                    case "V":
-                        if ((c.getY() + widthCarro) != (widthRua + r.getY()))
-                        {
-                            c.setY(c.getY() + velocidadeCarro);
-                        }
-                        else // if (r.getY() == 0) vira esquerda
-                        {
-                            r.removeCarro();
-                            ruas.get(3).addCarro(c);
-                        }
-                        break;
-                    default:
-                        if ((c.getY() + widthCarro) != (heightRua + r.getY()))
-                        {
-                            c.setY(c.getY() + velocidadeCarro);
-                        }
-                        else // if (r.getY() == 0) vira esquerda
-                        {
-                            r.removeCarro();
-                            ruas.get(4).addCarro(c);
-                        }
-                        break;
+                    if(null != r.getTipo()) 
+                    switch (r.getTipo()) 
+                    {
+                        case "H":
+                            if ((c.getX() + widthCarro) != (widthRua + r.getX()))
+                            {
+                                c.setX(c.getX() + velocidadeCarro);
+                            }
+                            else // vira pra direita
+                            {
+                                r.removeCarro();
+                                if (c.getProxRua() != indexRua && indexRua != 3) {
+                                    ruas.get(3).addCarro(c);
+                                } 
+                            }
+                            break;
+                        case "V":
+                            if ((c.getY() + widthCarro) != (widthRua + r.getY()))
+                            {
+                                c.setY(c.getY() + velocidadeCarro);
+                            }
+                            else // if (r.getY() == 0) vira esquerda
+                            {
+                                r.removeCarro();
+                                if (c.getProxRua() != indexRua && indexRua != 3) {
+                                    ruas.get(3).addCarro(c);
+                                }
+                             //  ruas.get(3).addCarro(c);
+                            }
+                            break;
+                        default:
+                            if ((c.getY() + widthCarro) != (heightRua + r.getY()))
+                            {
+                                c.setY(c.getY() + velocidadeCarro);
+                            }
+                            else // if (r.getY() == 0) vira esquerda
+                            {
+                                r.removeCarro();
+                                ruas.get(c.getProxRua()).addCarro(c);
+                               // ruas.get(4).addCarro(c);
+                            }
+                            break;
+                    }
                 }
+                indexRua++;
             }
         }
     }

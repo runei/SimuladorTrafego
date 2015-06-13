@@ -21,7 +21,7 @@ public class Rua {
     
     public Rua (int _x, int _y, String _tipo)
     {
-        carros = new LinkedList<Carro>();
+        carros = new LinkedList<>();
         x = _x; y = _y; tipo = _tipo;
     }
 
@@ -92,4 +92,5 @@ public class Rua {
     public void setTipo(String tipo) {
         this.tipo = tipo;
     }
+    
 }

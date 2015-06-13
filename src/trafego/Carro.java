@@ -13,6 +13,7 @@ public class Carro
 {
     private int x;
     private int y;
+    private int proxRua;
     
     public Carro() 
     {
@@ -56,6 +57,20 @@ public class Carro
      */
     public void setY(int y) {
         this.y = y;
+    }
+
+    /**
+     * @return the proxRua
+     */
+    public int getProxRua() {
+        return proxRua;
+    }
+
+    /**
+     * @param proxRua the proxRua to set
+     */
+    public void setProxRua(int proxRua) {
+        this.proxRua = proxRua;
     }
     
 }
