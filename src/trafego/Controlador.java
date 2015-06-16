@@ -21,6 +21,7 @@ public class Controlador extends JPanel {
 
     private Timer timerMoverCarro;
     private Timer timerCriarCarro;
+    private Timer timerSemaforo;
     private ArrayList<Rua> ruas;
     private final int widthRua = 200;
     private final int heightRua = 150;
@@ -40,9 +41,12 @@ public class Controlador extends JPanel {
        setFocusable(true);
        timerMoverCarro = new Timer(400, new ActionMoverCarro());
        timerCriarCarro = new Timer(1, new ActionCriarCarro());
+       timerSemaforo = new Timer(10000, new ActionSemaforo());
        
        Rua r1 = new Rua(0, widthRua, "H");
+	   r1.setSemaforo(new Semaforo(true));
        Rua r2 = new Rua(widthRua, 0, "V");
+	   r2.setSemaforo(new Semaforo(false));
        Rua r3 = new Rua(widthRua+heightRua, widthRua, "H");
        Rua r4 = new Rua(widthRua, widthRua, "C");
        Rua r5 = new Rua(widthRua, widthRua+heightRua, "V");
@@ -62,9 +66,7 @@ public class Controlador extends JPanel {
         
         timerCriarCarro.start();
         timerMoverCarro.start();
-        
-     
-        
+		timerSemaforo.start();
     }
     
     @Override
@@ -79,15 +81,15 @@ public class Controlador extends JPanel {
         for(Rua r : ruas)
         {
             pintarRua(g, r.getX(), r.getY(), r.getTipo());
+			if(r.temSemaforo()) 
+			{
+				pintarSemaforo(g, r.getSemaforo(), r.getX(), r.getY(), r.getTipo());
+			}
             for(Carro c : r.getCarros())
             {
                 pintarCarro(g, c.getX(), c.getY(), r.getTipo());
             }
         }
-        // pintar ruas
-        // pintar carros
-        // pintar semaforos
-        
     }
     
     private void pintarRua(Graphics g, int x, int y, String tipo)
@@ -106,20 +108,45 @@ public class Controlador extends JPanel {
                 break;
         }
     }
+	
+	private void pintarSemaforo(Graphics g, Semaforo s, int x, int y, String tipo)
+	{
+		if (s.isSituacao()) 
+			g.setColor(Color.GREEN);
+		else
+			g.setColor(Color.RED);
+		if("H".equals(tipo))
+			g.fillRect(widthRua-20, y, 20, heightRua);
+		else
+			g.fillRect(x, widthRua-20, heightRua, 20);
+	}
     
     private void pintarCarro(Graphics g, int x, int y, String tipo)
     {
         g.setColor(Color.YELLOW);
         if("H".equals(tipo))
-        {
-            g.fillRect(x, y, widthCarro, heightCarro);
-        }
+			g.fillRect(x, y, widthCarro, heightCarro);
         else // if (tipo == "V"
-        {
             g.fillRect(x, y, heightCarro, widthCarro);
-        }
     }
     
+	public class ActionSemaforo implements ActionListener 
+	{
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			for(Rua r : ruas)
+			{
+				if(r.temSemaforo())
+				{
+					r.mudarEstadoSemaforo();
+				}
+			}
+			repaint();
+		}
+		
+	}
+	
     public class ActionCriarCarro implements ActionListener {
 
         @Override
@@ -154,8 +181,6 @@ public class Controlador extends JPanel {
     }
     
     public class ActionMoverCarro implements ActionListener { 
-        private Object SwingUtils;
-       
         @Override
         public void actionPerformed(ActionEvent e)
         {
@@ -170,53 +195,53 @@ public class Controlador extends JPanel {
             int indexRua = 0;
             for(Rua r : ruas)
             {
-                for(Carro c : r.getCarros())
-                {
-                    if(null != r.getTipo()) 
-                    switch (r.getTipo()) 
-                    {
-                        case "H":
-                            if ((c.getX() + widthCarro) != (widthRua + r.getX()))
-                            {
-                                c.setX(c.getX() + velocidadeCarro);
-                            }
-                            else // vira pra direita
-                            {
-                                r.removeCarro();
-                                if (c.getProxRua() != indexRua && indexRua != 3) {
-                                    ruas.get(3).addCarro(c);
-                                } 
-                            }
-                            break;
-                        case "V":
-                            if ((c.getY() + widthCarro) != (widthRua + r.getY()))
-                            {
-                                c.setY(c.getY() + velocidadeCarro);
-                            }
-                            else // if (r.getY() == 0) vira esquerda
-                            {
-                                r.removeCarro();
-                                if (c.getProxRua() != indexRua && indexRua != 3) {
-                                    ruas.get(3).addCarro(c);
-                                }
-                             //  ruas.get(3).addCarro(c);
-                            }
-                            break;
-                        default:
-                            if ((c.getY() + widthCarro) != (heightRua + r.getY()))
-                            {
-                                c.setY(c.getY() + velocidadeCarro);
-                            }
-                            else // if (r.getY() == 0) vira esquerda
-                            {
-                                r.removeCarro();
-                                ruas.get(c.getProxRua()).addCarro(c);
-                               // ruas.get(4).addCarro(c);
-                            }
-                            break;
-                    }
-                }
-                indexRua++;
+				for(Carro c : r.getCarros())
+				{
+					if(null != r.getTipo()) 
+					switch (r.getTipo()) 
+					{
+						case "H":
+							if ((c.getX() + widthCarro) != (widthRua + r.getX()))
+							{
+								c.setX(c.getX() + velocidadeCarro);
+							}
+							else if(r.temSemaforo() && r.getSemaforo().isSituacao()) // vira pra direita
+							{
+								r.removeCarro();
+								if (c.getProxRua() != indexRua && indexRua != 3) {
+									ruas.get(3).addCarro(c);
+								} 
+							}
+							break;
+						case "V":
+							if ((c.getY() + widthCarro) != (widthRua + r.getY()))
+							{
+								c.setY(c.getY() + velocidadeCarro);
+							}
+							else if(r.temSemaforo() && r.getSemaforo().isSituacao())// if (r.getY() == 0) vira esquerda
+							{
+								r.removeCarro();
+								if (c.getProxRua() != indexRua && indexRua != 3) {
+									ruas.get(3).addCarro(c);
+								}
+							 //  ruas.get(3).addCarro(c);
+							}
+							break;
+						default:
+							if ((c.getY() + widthCarro) != (heightRua + r.getY()))
+							{
+								c.setY(c.getY() + velocidadeCarro);
+							}
+							else // if (r.getY() == 0) vira esquerda
+							{
+								r.removeCarro();
+								ruas.get(c.getProxRua()).addCarro(c);
+							   // ruas.get(4).addCarro(c);
+							}
+							break;
+					}
+				}
+				indexRua++;
             }
         }
     }

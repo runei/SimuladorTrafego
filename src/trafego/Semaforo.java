@@ -15,9 +15,9 @@ public class Semaforo {
     private int x;
     private int y;
     
-    public Semaforo()
+    public Semaforo(boolean _situacao)
     {
-        
+        situacao = _situacao;
     }
 
     /**

@@ -17,12 +17,14 @@ public class Rua {
     private int x;
     private int y;
     private Queue<Carro> carros;
+    private Semaforo semaforo;
     private String tipo;
     
     public Rua (int _x, int _y, String _tipo)
     {
         carros = new LinkedList<>();
         x = _x; y = _y; tipo = _tipo;
+		semaforo = null;
     }
 
     /**
@@ -92,5 +94,35 @@ public class Rua {
     public void setTipo(String tipo) {
         this.tipo = tipo;
     }
+
+	/**
+	 * @return the semaforo
+	 */
+	public Semaforo getSemaforo() {
+		return semaforo;
+	}
+
+	/**
+	 * @param semaforo the semaforo to set
+	 */
+	public void setSemaforo(Semaforo semaforo) {
+		this.semaforo = semaforo;
+	}
+	
+	public boolean temSemaforo()
+	{
+		return semaforo != null;
+	}
+
+	void mudarEstadoSemaforo() {
+		if(semaforo.isSituacao())
+		{
+			semaforo.setSituacao(false);
+		}
+		else
+		{
+			semaforo.setSituacao(true);
+		}
+	}
     
 }
