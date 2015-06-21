@@ -5,6 +5,8 @@
  */
 package trafego;
 
+import java.awt.Color;
+
 /**
  *
  * @author UCS
@@ -14,6 +16,7 @@ public class Carro
     private int x;
     private int y;
     private int proxRua;
+    private Color cor;
     
     public Carro() 
     {
@@ -71,6 +74,20 @@ public class Carro
      */
     public void setProxRua(int proxRua) {
         this.proxRua = proxRua;
+    }
+
+    /**
+     * @return the cor
+     */
+    public Color getCor() {
+        return cor;
+    }
+
+    /**
+     * @param cor the cor to set
+     */
+    public void setCor(Color cor) {
+        this.cor = cor;
     }
     
 }

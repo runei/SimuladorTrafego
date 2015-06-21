@@ -10,27 +10,12 @@ package trafego;
  * @author UCS
  */
 public class Semaforo {
-    
-    private boolean situacao;
+
+    private ECorSemaforo situacao;
     private int x;
     private int y;
-    
-    public Semaforo(boolean _situacao)
-    {
-        situacao = _situacao;
-    }
 
-    /**
-     * @return the situacao
-     */
-    public boolean isSituacao() {
-        return situacao;
-    }
-
-    /**
-     * @param situacao the situacao to set
-     */
-    public void setSituacao(boolean situacao) {
+    public Semaforo(ECorSemaforo situacao) {
         this.situacao = situacao;
     }
 
@@ -61,5 +46,23 @@ public class Semaforo {
     public void setY(int y) {
         this.y = y;
     }
-    
+
+    /**
+     * @return the situacao
+     */
+    public ECorSemaforo getSituacao() {
+        return situacao;
+    }
+
+    /**
+     * @param situacao the situacao to set
+     */
+    public void setSituacao(ECorSemaforo situacao) {
+        this.situacao = situacao;
+    }
+
+    public boolean sinalAberto() {
+        return this.situacao == ECorSemaforo.GREEN;
+    }
+
 }

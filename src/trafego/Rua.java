@@ -13,18 +13,20 @@ import java.util.Queue;
  * @author UCS
  */
 public class Rua {
-    
+
     private int x;
     private int y;
     private Queue<Carro> carros;
     private Semaforo semaforo;
     private String tipo;
-    
-    public Rua (int _x, int _y, String _tipo)
-    {
+    private final int maxCarrosRua = 3;
+
+    public Rua(int _x, int _y, String _tipo) {
         carros = new LinkedList<>();
-        x = _x; y = _y; tipo = _tipo;
-		semaforo = null;
+        x = _x;
+        y = _y;
+        tipo = _tipo;
+        semaforo = null;
     }
 
     /**
@@ -69,15 +71,15 @@ public class Rua {
         this.carros = carros;
     }
 
-    public void addCarro(Carro c)
-    {
-        c.setX(this.getX());
-        c.setY(this.getY());
-        this.carros.add(c);
+    public void addCarro(Carro c) {
+        if (this.carros.size() < maxCarrosRua) {
+            c.setX(this.getX());
+            c.setY(this.getY());
+            this.carros.add(c);
+        }
     }
-    
-    public Carro removeCarro()
-    {
+
+    public Carro removeCarro() {
         return this.carros.remove();
     }
 
@@ -95,34 +97,32 @@ public class Rua {
         this.tipo = tipo;
     }
 
-	/**
-	 * @return the semaforo
-	 */
-	public Semaforo getSemaforo() {
-		return semaforo;
-	}
+    /**
+     * @return the semaforo
+     */
+    public Semaforo getSemaforo() {
+        return semaforo;
+    }
 
-	/**
-	 * @param semaforo the semaforo to set
-	 */
-	public void setSemaforo(Semaforo semaforo) {
-		this.semaforo = semaforo;
-	}
-	
-	public boolean temSemaforo()
-	{
-		return semaforo != null;
-	}
+    /**
+     * @param semaforo the semaforo to set
+     */
+    public void setSemaforo(Semaforo semaforo) {
+        this.semaforo = semaforo;
+    }
 
-	void mudarEstadoSemaforo() {
-		if(semaforo.isSituacao())
-		{
-			semaforo.setSituacao(false);
-		}
-		else
-		{
-			semaforo.setSituacao(true);
-		}
-	}
-    
+    public boolean temSemaforo() {
+        return semaforo != null;
+    }
+
+    void mudarEstadoSemaforo() {
+        if (semaforo.getSituacao() == ECorSemaforo.GREEN) {
+            semaforo.setSituacao(ECorSemaforo.YELLOW);
+        } else if (semaforo.getSituacao() == ECorSemaforo.YELLOW) {
+            semaforo.setSituacao(ECorSemaforo.RED);
+        } else {
+            semaforo.setSituacao(ECorSemaforo.GREEN);
+        }
+    }
+
 }

@@ -25,7 +25,7 @@ public class Trafego extends JFrame {
         add(c);
         c.iniciar();
 
-        setSize(600, 400);
+        setSize(600, 600);
         setTitle("Trafego");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);       

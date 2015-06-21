@@ -10,8 +10,10 @@ import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -33,21 +35,24 @@ public class Controlador extends JPanel {
     private final int velocidadeCarro = 10;
     private final int tempoMinimo = 1500;
     private final int tempoMaximo = 5000;
+    private final int distanciaCarros = 15;
+    private final int tempoSemaforo = 10000;
 
     public Controlador(Trafego t) {
-        initControlador(t);
+        initControlador();
     }
 
-    private void initControlador(Trafego t) {
+    private void initControlador() {
         setFocusable(true);
+        
         timerMoverCarro = new Timer(400, new ActionMoverCarro());
         timerCriarCarro = new Timer(1, new ActionCriarCarro());
-        timerSemaforo = new Timer(10000, new ActionSemaforo());
+        timerSemaforo = new Timer(tempoSemaforo, new ActionSemaforo());
 
         Rua r1 = new Rua(0, widthRua, "H");
-        r1.setSemaforo(new Semaforo(true));
+        r1.setSemaforo(new Semaforo(ECorSemaforo.GREEN));
         Rua r2 = new Rua(widthRua, 0, "V");
-        r2.setSemaforo(new Semaforo(false));
+        r2.setSemaforo(new Semaforo(ECorSemaforo.RED));
         Rua r3 = new Rua(widthRua + heightRua, widthRua, "H");
         Rua r4 = new Rua(widthRua, widthRua + heightRua, "V");
         Rua r5 = new Rua(widthRua, widthRua, "C");
@@ -60,10 +65,6 @@ public class Controlador extends JPanel {
     }
 
     public void iniciar() {
-        // random
-        //ruas.get(0).addCarro(new Carro());
-        //ruas.get(1).addCarro(new Carro());
-
         timerCriarCarro.start();
         timerMoverCarro.start();
         timerSemaforo.start();
@@ -86,7 +87,7 @@ public class Controlador extends JPanel {
             Iterator<Carro> itcarro = r.getCarros().iterator();
             while (itcarro.hasNext()) {
                 Carro c = itcarro.next();
-                pintarCarro(g, c.getX(), c.getY(), r.getTipo());
+                pintarCarro(g, c, r);
             }
         }
     }
@@ -109,11 +110,7 @@ public class Controlador extends JPanel {
     }
 
     private void pintarSemaforo(Graphics g, Semaforo s, int x, int y, String tipo) {
-        if (s.isSituacao()) {
-            g.setColor(Color.GREEN);
-        } else {
-            g.setColor(Color.RED);
-        }
+        g.setColor(s.getSituacao().getCor());
         if ("H".equals(tipo)) {
             g.fillRect(widthRua - 20, y, 20, heightRua);
         } else {
@@ -122,19 +119,24 @@ public class Controlador extends JPanel {
     }
 
     private Color corCarro() {
+        List<Color> naoUsar = Arrays.asList(Color.BLACK, Color.GREEN, Color.RED);
         int h = (int) (Math.random() * 255);
         int s = (int) (Math.random() * 255);
         int b = (int) (Math.random() * 255);
-        return Color.getHSBColor(h, s, b);
+        Color cor = Color.getHSBColor(h, s, b);
+        if (naoUsar.contains(cor)) {
+            return corCarro();
+        } else {
+            return cor;
+        }
     }
-    
-    private void pintarCarro(Graphics g, int x, int y, String tipo) {
-        g.setColor(corCarro());
-        if ("H".equals(tipo)) {
-            g.fillRect(x, y, widthCarro, heightCarro);
-        } else // if (tipo == "V"
-        {
-            g.fillRect(x, y, heightCarro, widthCarro);
+
+    private void pintarCarro(Graphics g, Carro carro, Rua rua) {
+        g.setColor(carro.getCor());
+        if (rua.getTipo().equals("H") || (rua.getTipo().equals("C") && ruas.get(carro.getProxRua()).getTipo().equals("H"))) {
+            g.fillRect(carro.getX(), carro.getY(), widthCarro, heightCarro);
+        } else {
+            g.fillRect(carro.getX(), carro.getY(), heightCarro, widthCarro);
         }
     }
 
@@ -142,14 +144,32 @@ public class Controlador extends JPanel {
 
         @Override
         public synchronized void actionPerformed(ActionEvent e) {
-            Iterator<Rua> itRua = ruas.iterator();
+            ((Timer) e.getSource()).stop();
+            if (ruas.get(0).getSemaforo().getSituacao() == ECorSemaforo.YELLOW) {
+                ruas.get(0).mudarEstadoSemaforo();
+                ruas.get(1).mudarEstadoSemaforo();
+                ((Timer) e.getSource()).setInitialDelay(tempoSemaforo);
+            } else if (ruas.get(1).getSemaforo().getSituacao() == ECorSemaforo.YELLOW) {
+                ruas.get(1).mudarEstadoSemaforo();
+                ruas.get(0).mudarEstadoSemaforo();
+                ((Timer) e.getSource()).setInitialDelay(tempoSemaforo);
+            } else if (ruas.get(0).getSemaforo().getSituacao() == ECorSemaforo.GREEN) {
+                ruas.get(0).mudarEstadoSemaforo();
+                ((Timer) e.getSource()).setInitialDelay(tempoSemaforo / 5);
+            } else if (ruas.get(1).getSemaforo().getSituacao() == ECorSemaforo.GREEN) {
+                ruas.get(1).mudarEstadoSemaforo();
+                ((Timer) e.getSource()).setInitialDelay(tempoSemaforo / 5);
+            }
+            
+            /*Iterator<Rua> itRua = ruas.iterator();
             while (itRua.hasNext()) {
                 Rua r = itRua.next();
                 if (r.temSemaforo()) {
                     r.mudarEstadoSemaforo();
                 }
-            }
+            }*/
             repaint();
+            ((Timer) e.getSource()).start();
         }
 
     }
@@ -160,22 +180,21 @@ public class Controlador extends JPanel {
         public synchronized void actionPerformed(ActionEvent e) {
             ((Timer) e.getSource()).stop();
 
-            int nrorua = (int) (Math.random() * 2);//5 nro de ruas
-            /*if (nrorua == 3) {//3 rua central
-                nrorua++;
-            }*/
+            int nrorua = (int) (Math.random() * 2);//2 ruas que entram carros;
+//            int nrorua = 1;
 
             Carro c = new Carro();
 
             int proxNroRua = (int) (Math.random() * 2) + 2;
             /*while (proxNroRua == nrorua || proxNroRua == 3) {
-                proxNroRua++;
-                if (proxNroRua > 4) {
-                    proxNroRua = 0;
-                }
-            }*/
+             proxNroRua++;
+             if (proxNroRua > 4) {
+             proxNroRua = 0;
+             }
+             }*/
 
             c.setProxRua(proxNroRua);
+            c.setCor(corCarro());
 
             ruas.get(nrorua).addCarro(c);
 
@@ -198,12 +217,11 @@ public class Controlador extends JPanel {
         }
 
         public synchronized void moverCarros() {
-            int indexRua = 0;
             Iterator<Rua> itRua = ruas.iterator();
-            LinkedHashMap<Integer, Carro> rcRemove = new LinkedHashMap<>();
             LinkedHashMap<Integer, Carro> rcAdd = new LinkedHashMap<>();
             while (itRua.hasNext()) {
                 Rua r = itRua.next();
+                Carro cAnt = null;
                 Iterator<Carro> itCarro = r.getCarros().iterator();
                 while (itCarro.hasNext()) {
                     Carro c = itCarro.next();
@@ -211,61 +229,54 @@ public class Controlador extends JPanel {
                         switch (r.getTipo()) {
                             case "H":
                                 if ((c.getX() + widthCarro) != (widthRua + r.getX())) {
-                                    c.setX(c.getX() + velocidadeCarro);
-                                } else if (r.temSemaforo() && r.getSemaforo().isSituacao()) // vira pra direita
-                                {
-                                    if (c.getProxRua() != indexRua && indexRua != 4) {
-//                                        ruas.get(3).addCarro(c);
-                                        rcAdd.put(4, c);
+                                    if (cAnt == null || ((c.getX() + widthCarro) <= (cAnt.getX() - distanciaCarros))) {
+                                        c.setX(c.getX() + velocidadeCarro);
                                     }
-                                   // r.removeCarro();
-//                                    rcRemove.put(indexRua, c);
+                                } else if (r.temSemaforo() && r.getSemaforo().sinalAberto()) { // vira pra direita
+                                    rcAdd.put(4, c);
+                                    itCarro.remove();
+                                } else if (!r.temSemaforo()) {
                                     itCarro.remove();
                                 }
                                 break;
                             case "V":
                                 if ((c.getY() + widthCarro) != (widthRua + r.getY())) {
-                                    c.setY(c.getY() + velocidadeCarro);
-                                } else if (r.temSemaforo() && r.getSemaforo().isSituacao())// if (r.getY() == 0) vira esquerda
-                                {
-                                    if (c.getProxRua() != indexRua && indexRua != 4) {
-//                                        ruas.get(3).addCarro(c);
-                                        rcAdd.put(4, c);
+                                    if (cAnt == null || (c.getY() + heightCarro <= cAnt.getY() - distanciaCarros * 3)) {
+                                        c.setY(c.getY() + velocidadeCarro);
                                     }
-                               //     r.removeCarro();
+                                } else if (r.temSemaforo() && r.getSemaforo().sinalAberto()) {// vira esquerda
+                                    rcAdd.put(4, c);
                                     itCarro.remove();
-//                                    rcRemove.put(indexRua, c);
+                                } else if (!r.temSemaforo()) {
+                                    itCarro.remove();
                                 }
                                 break;
                             default:
-                                if ((c.getY() + widthCarro) != (heightRua + r.getY())) {
-                                    c.setY(c.getY() + velocidadeCarro);
-                                } else // if (r.getY() == 0) vira esquerda
-                                {
-                             //       r.removeCarro();
-//                                    ruas.get(c.getProxRua()).addCarro(c);;
-                                    rcAdd.put(c.getProxRua(), c);
-//                                    rcAdd.put(indexRua, c);
-                                    
-                                    itCarro.remove();
+                                if (ruas.get(c.getProxRua()).getTipo().equals("V")) {
+                                    if ((c.getY() + widthCarro) != (widthRua + r.getY())) {
+                                        c.setY(c.getY() + velocidadeCarro);
+                                    } else {
+                                        rcAdd.put(c.getProxRua(), c);
+                                        itCarro.remove();
+                                    }
+                                } else if (ruas.get(c.getProxRua()).getTipo().equals("H")) {
+                                    if ((c.getX() + widthCarro) != (widthRua + r.getX())) {
+                                        c.setX(c.getX() + velocidadeCarro);
+                                    } else {
+                                        rcAdd.put(c.getProxRua(), c);
+                                        itCarro.remove();
+                                    }
                                 }
                                 break;
                         }
                     }
+                    cAnt = c;
                 }
-                indexRua++;
             }
-            
-            for(Map.Entry<Integer, Carro> e : rcAdd.entrySet())
-            {
+
+            for (Map.Entry<Integer, Carro> e : rcAdd.entrySet()) {
                 ruas.get(e.getKey()).addCarro(e.getValue());
             }
-
-            /*for(Map.Entry<Integer, Carro> e : rcRemove.entrySet())
-            {
-                ruas.get(e.getKey()).removeCarro()
-            }*/
-
         }
     }
 }
